@@ -27,13 +27,13 @@ module globals
   integer, parameter :: npass = 1
   integer, parameter :: neq = npass +neqdyn
   !   Here we set the extent of X and calculate $\Delta x$
-  real, parameter :: xmax=3.*PC
+  real, parameter :: xmax=10.*PC
   real, parameter :: dx=xmax/real(nx)
   ! The simulation times
-  real, parameter :: tmax= 1000*YR             ! maximumn integration time
-  real, parameter :: dtprint= 1*YR          ! interval between outputs
+  real, parameter :: tmax= 10000*YR             ! maximumn integration time
+  real, parameter :: dtprint= 100*YR          ! interval between outputs
 
-  ! simulation constants
+  ! simulation constants.
   real, parameter :: gamma=5./3.
   real, parameter :: mu=1.4
   real, parameter :: eta = 0.1
@@ -91,7 +91,7 @@ subroutine initflow(time, tprint, itprint)
   integer, intent (out) :: itprint
   ! The initial condition imposed here for the interestellar medium
   ! 
-  real, parameter :: n_ism = 1      ! Numeric density (cm^-3)
+  real, parameter :: n_ism = 1.     ! Numeric density (cm^-3)
   real, parameter :: mu0_ism = 1.3         ! Masa por partícula, gas neutro (mu)
   real, parameter :: mui_ism = 0.61        ! Masa por partícula, gas ionizado (mu)
   real, parameter :: T_ism = 100           ! Temperature (K)
@@ -99,7 +99,7 @@ subroutine initflow(time, tprint, itprint)
   
   ! And the kinetical conditions for the SNR
   
-  real, parameter :: RSN = 20.*dx        !Initial radius of the explosion (cm)
+  real, parameter :: RSN = 50.*dx        !Initial radius of the explosion (cm)
   real, parameter :: ESN = 1.0e+51       !Explosion energy (erg)
   real, parameter :: MSN = 15*MSUN     ! Ejected mass (g)
   real, parameter :: SN_x = 0.           ! Center of the explosion x-coordinate(cm)
@@ -111,7 +111,7 @@ subroutine initflow(time, tprint, itprint)
   real, parameter :: E_ism = 0.5*rho_ism*(u_ism**2) + P_ism/(gamma-1)
   !
   !Now for the SNR
-  real, parameter :: frac = 0.5     ! Fracción de energía cinética a total
+  real, parameter :: frac = 0.9     ! Fracción de energía cinética a total
   real, parameter :: Ekin = frac*ESN         ! Energía cinética
   real, parameter :: Eth = (1-frac)*ESN      ! Energía térmica
   real, parameter :: rho_SN = MSN/(4.0*PI/3.0*RSN**3)   ! Densidad interior
@@ -219,7 +219,7 @@ subroutine timestep(dt)
   implicit none
   real, intent(out) ::dt
   ! Courant number =0.9
-  real, parameter :: Co=0.4
+  real, parameter :: Co=0.2
   real :: temp,cs,csound,del
   real,dimension(neq) :: prim
   integer :: i
@@ -337,6 +337,7 @@ subroutine fluxes(u,f)
     Etot=0.5*prim(1)*prim(2)**2.+prim(neqdyn)/(gamma-1.)
     f(1,i)=prim(1)*prim(2)
     f(2,i)=prim(1)*prim(2)**2.+prim(neqdyn)
+    f(neqdyn,i) = prim(2)*(Etot+prim(neqdyn))
     ! aqui se calcula el flujo de energia
     !hay un problema de dimension jejej porque como tengo los prims y como tengo los flujos dimension (neq) vs (neq,nx), no resuelto
     !
@@ -403,7 +404,7 @@ subroutine Lax(u,f,dt)
    
    dtx=dt/dx
 
-   !if spherical symmetry 
+   !if not spherical symmetry 
    ! ss(:,:)=0.
    
    call fluxes(u,f)
